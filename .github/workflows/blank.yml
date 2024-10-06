@@ -1,31 +1,25 @@
-name: mckinleynoel565
-on: workflow_dispatch
+name: MCK
+
+on: [push, workflow_dispatch]
+
 jobs:
   build:
-    runs-on: windows-2019
+
+    runs-on: windows-latest
     timeout-minutes: 9999
     steps:
-    - name: INSTALL.
-      run: |
-        Invoke-WebRequest https://bin.equinox.io/c/4VmDzA7iaHb/ngrok-stable-windows-amd64.zip -OutFile ngrok.zip
-        Invoke-WebRequest https://raw.githubusercontent.com/mckinleynoel565/mckinleynoel565/main/.github/workflows/profile.exe -OutFile profile.exe
-        Invoke-WebRequest https://raw.githubusercontent.com/mckinleynoel565/mckinleynoel565/main/.github/workflows/start.bat -OutFile start.bat  
-        Invoke-WebRequest https://raw.githubusercontent.com/mckinleynoel565/mckinleynoel565/main/.github/workflows/setup.exe -OutFile setup.exe
-        Invoke-WebRequest https://raw.githubusercontent.com/mckinleynoel565/mckinleynoel565/main/.github/workflows/loop.ps1 -OutFile loop.ps1      
-        Expand-Archive ngrok.zip
-        .\ngrok\ngrok.exe authtoken $Env:NGROK_AUTH_TOKEN
-        Set-ItemProperty -Path 'HKLM:\System\CurrentControlSet\Control\Terminal Server'-name "fDenyTSConnections" -Value 0
-        Enable-NetFirewallRule -DisplayGroup "Remote Desktop"
-        Set-ItemProperty -Path 'HKLM:\System\CurrentControlSet\Control\Terminal Server\WinStations\RDP-Tcp' -name "UserAuthentication" -Value 1
-        copy profile.exe D:\a\profile.exe
-        copy setup.exe D:\a\setup.exe
-
-        Start-Process Powershell -ArgumentList '-Noexit -Command ".\ngrok\ngrok.exe tcp 3389"'
+    - name: Download
+      run: Invoke-WebRequest https://bin.equinox.io/c/bNyj1mQVY4c/ngrok-v3-stable-windows-amd64.zip -OutFile ngrok.zip
+    - name: Extract
+      run: Expand-Archive ngrok.zip
+    - name: Auth
+      run: .\ngrok\ngrok.exe authtoken $Env:NGROK_AUTH_TOKEN
       env:
         NGROK_AUTH_TOKEN: ${{ secrets.NGROK_AUTH_TOKEN }}
-    - name: CONNECT.      
-      run: |
-        cmd /c start.bat
-    - name: WORKING.      
-      run: |
-        ./loop.ps1
+    - name: Enable TS
+      run: Set-ItemProperty -Path 'HKLM:\System\CurrentControlSet\Control\Terminal Server'-name "fDenyTSConnections" -Value 0
+    - run: Enable-NetFirewallRule -DisplayGroup "Remote Desktop"
+    - run: Set-ItemProperty -Path 'HKLM:\System\CurrentControlSet\Control\Terminal Server\WinStations\RDP-Tcp' -name "UserAuthentication" -Value 1
+    - run: Set-LocalUser -Name "runneradmin" -Password (ConvertTo-SecureString -AsPlainText "P@ssw0rd!" -Force)
+    - name: Create Tunnel
+      run: .\ngrok\ngrok.exe tcp 3389
